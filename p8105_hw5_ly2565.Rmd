@@ -7,7 +7,7 @@ output: github_document
 
 ```{r, setup, include = FALSE}
 library(tidyverse)
-library(p8105.datasets)
+
 
 knitr::opts_chunk$set(
   fig.width = 6,
@@ -26,9 +26,43 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 ```
 
+## Problem 1
+
+### Load and describe the raw dataset
+
+```{r}
+homicide_raw = read_csv("data/homicide-data.csv") 
+```
+This raw homicide dataset contains `r nrow(homicide_raw)` observations of `r ncol(homicide_raw)` variables: `r names(homicide_raw)`.
+
+### Data manipulation
+
+```{r}
+homicide_df = 
+  homicide_raw %>% 
+  janitor::clean_names() %>% 
+  mutate(city_state = str_c(city, state, sep = ", "))
+
+##total number of homicides by cities
+df1 = homicide_df %>% 
+  group_by(city_state) %>% 
+  summarize(n_total = n()) 
+  
+##number of unsolved homicides by cities
+df2 = homicide_df %>% 
+  filter(disposition != "Closed by arrest") %>% 
+  group_by(city_state) %>% 
+  summarize(n_unsolved = n())
+  
+  
+```
 
 
-
+```{r}
+homicide_prop = 
+  left_join(df1, df2) %>% 
+  filter(city_state == "Baltimore, MD")
+```
 
 
 
