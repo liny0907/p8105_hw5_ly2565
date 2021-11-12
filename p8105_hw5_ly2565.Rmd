@@ -91,7 +91,7 @@ homicide_test
 
 Scatterplot showing the estimates and CIs for each city.
 
-```{r}
+```{r, dpi = 300}
 homicide_test %>% 
   mutate(city_state = fct_reorder(city_state, estimate)) %>% 
   ggplot(aes(x = city_state, y = estimate, color = city_state)) +
@@ -102,7 +102,7 @@ homicide_test %>%
     x = "City",
     y = "Estimated Proportion of Unsolved Homicides",
     color = "Cities",
-    title = "Estimated Proportion of Unsolved Homicieds in Each City"
+    title = "Estimated Proportion of Unsolved Homicides in Each City"
   )
 ```
 
