@@ -91,7 +91,7 @@ homicide_test
 
 Scatterplot showing the estimates and CIs for each city.
 
-```{r, dpi = 300}
+```{r, dpi = 300, echo=FALSE}
 homicide_test %>% 
   mutate(city_state = fct_reorder(city_state, estimate)) %>% 
   ggplot(aes(x = city_state, y = estimate, color = city_state)) +
@@ -105,6 +105,43 @@ homicide_test %>%
     title = "Estimated Proportion of Unsolved Homicides in Each City"
   )
 ```
+
+
+## Problem 2
+
+```{r, message = FALSE, dpi = 300}
+df = tibble(
+  file = list.files("data/data2")) %>% 
+  mutate(
+    id = str_remove(file, ".csv"),
+    path = str_c("data/data2/", file),
+    data = map(path, read_csv)) %>% 
+  unnest(data) %>% 
+  select(-file, -path) %>% 
+  pivot_longer(
+    week_1:week_8,
+    names_to = "week",
+    names_prefix = "week_",
+    values_to = "data"
+  ) %>% 
+  separate(id, into = c("group", "id"))
+
+df %>% 
+  ggplot(aes(x = week, y = data, group = interaction(group, id), color = group)) +
+  geom_line() +
+  labs(
+    x = "Week",
+    y = "Data",
+    color = "Group"
+  )
+  
+```
+
+
+
+
+
+
 
 
 
