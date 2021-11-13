@@ -30,7 +30,7 @@ scale_fill_discrete = scale_fill_viridis_d
 
 ### Load and describe the raw dataset
 
-```{r}
+```{r, message = FALSE}
 homicide_raw = read_csv("data/homicide-data.csv")
 ```
 This raw homicide dataset contains `r nrow(homicide_raw)` observations of `r ncol(homicide_raw)` variables: `r names(homicide_raw)`.
@@ -38,7 +38,7 @@ This raw homicide dataset contains `r nrow(homicide_raw)` observations of `r nco
 ### Clean the dataset
 
 Summarize total number of homicides and the number of unsolved homicides within cities.
-```{r}
+```{r, message = FALSE}
 homicide_df = 
   homicide_raw %>% 
   janitor::clean_names() %>% 
@@ -97,11 +97,12 @@ homicide_test %>%
   ggplot(aes(x = city_state, y = estimate, color = city_state)) +
   geom_point() +
   geom_errorbar(aes(ymin = conf.low, ymax = conf.high)) +
-  theme(axis.text.x = element_text(angle = 90)) +
+  theme(
+    axis.text.x = element_text(angle = 90),
+    legend.position = "none") +
   labs(
     x = "City",
     y = "Estimated Proportion of Unsolved Homicides",
-    color = "Cities",
     title = "Estimated Proportion of Unsolved Homicides in Each City"
   )
 ```
@@ -109,7 +110,8 @@ homicide_test %>%
 
 ## Problem 2
 
-```{r, message = FALSE, dpi = 300}
+Create a tidy dataframe containing data from all participants.
+```{r, message = FALSE}
 df = tibble(
   file = list.files("data/data2")) %>% 
   mutate(
@@ -122,22 +124,59 @@ df = tibble(
     week_1:week_8,
     names_to = "week",
     names_prefix = "week_",
-    values_to = "data"
+    values_to = "observation"
   ) %>% 
   separate(id, into = c("group", "id"))
 
+df
+```
+
+Make a spaghetti plot showing observations on each subject over time.
+```{r}
 df %>% 
-  ggplot(aes(x = week, y = data, group = interaction(group, id), color = group)) +
+  ggplot(aes(x = week, y = observation, group = interaction(group, id), color = group)) +
   geom_line() +
   labs(
     x = "Week",
-    y = "Data",
+    y = "Observations",
+    title = "Observations on Each Subject Over Time",
     color = "Group"
   )
-  
+```
+Based on the plot, observations on participants from the experimental arm are, in general, higher than the control arm.
+
+## Problem 3
+
+Load the iris dataset and introduce some missing values.
+```{r}
+library(tidyverse)
+
+set.seed(10)
+
+iris_with_missing = iris %>% 
+  map_df(~replace(.x, sample(1:150, 20), NA)) %>%
+  mutate(Species = as.character(Species))
 ```
 
+Write a function that replaces missing values.
+```{r}
+fill_na = function(x) {
+  if (is.numeric(x)) {
+    x = replace_na(x, mean(x, na.rm = TRUE))
+  }
+  if (is.character(x)) {
+    x = replace_na(x, "Virginica")
+  }
+  
+  x
+}
+```
 
+Apply this function to the dataframe `iris_with_missing` to get a dataframe without missing values.
+```{r}
+iris_no_missing = map_df(iris_with_missing, fill_na)
+iris_no_missing
+```
 
 
 
