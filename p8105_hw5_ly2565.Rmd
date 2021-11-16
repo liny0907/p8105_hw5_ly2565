@@ -8,7 +8,6 @@ output: github_document
 ```{r, setup, include = FALSE}
 library(tidyverse)
 
-
 knitr::opts_chunk$set(
   fig.width = 6,
   fig.asp = .6,
@@ -43,48 +42,48 @@ homicide_df =
   homicide_raw %>% 
   janitor::clean_names() %>% 
   mutate(
-    state = ifelse(city == "Tulsa", "OK", state),
-    city_state = str_c(city, state, sep = ", "))
-
-##total number of homicides by cities
-total = homicide_df %>% 
+    city_state = str_c(city, state, sep = ", "),
+    resolution = case_when(
+      disposition != "Closed by arrest" ~ "unsolved",
+      disposition == "Closed by arrest" ~ "solved")) %>% 
+  filter(city_state != "Tulsa, AL") %>% 
+  relocate(city_state) %>% 
   group_by(city_state) %>% 
-  summarize(n_total = n()) 
-  
-##number of unsolved homicides by cities
-unsolved = homicide_df %>% 
-  filter(disposition != "Closed by arrest") %>% 
-  group_by(city_state) %>% 
-  summarize(n_unsolved = n())
+  summarize(
+    unsolved = sum(resolution == "unsolved"),
+    total = n())
 
-homicide_prop = left_join(total, unsolved)
-  
-homicide_prop
+homicide_df
 ```
 
 ### Proportion of unsolved homicides
 
 Run `prop.test` for Baltimore, MD.
 ```{r}
-baltimore = homicide_prop %>% 
+baltimore_summary = 
+  homicide_df %>% 
   filter(city_state == "Baltimore, MD")
-baltimore_prop = 
-  prop.test(pull(baltimore, n_unsolved), pull(baltimore, n_total), alternative = "two.sided", conf.level = 0.95) %>% 
-  broom::tidy() %>% 
-  select(estimate, conf.low, conf.high)
 
-baltimore_prop
+baltimore_test =
+  prop.test(
+    pull(baltimore_summary, unsolved), 
+    pull(baltimore_summary, total)) %>% 
+  broom::tidy() %>% 
+  select(estimate, starts_with("conf"))
+
+baltimore_test
 ```
 
 Run `prop.test` for each city.
 ```{r}
-homicide_test = 
-  homicide_prop %>%
+homicide_test =
+  homicide_df %>%
   mutate(
-    prop_test = map2(.x = n_unsolved, .y = n_total, ~prop.test(x = .x, n = .y, alternative = "two.sided", conf.level = 0.95)),
-    test_stats = map(prop_test, broom::tidy)) %>% 
-  unnest(cols = test_stats) %>% 
-  select(city_state, n_total, n_unsolved, estimate, conf.low, conf.high )
+    test_results = map2(unsolved, total, prop.test),
+    tidy_results = map(test_results, broom::tidy)) %>% 
+  select(city_state, tidy_results) %>% 
+  unnest(tidy_results) %>% 
+  select(city_state, estimate, starts_with("conf"))
 
 homicide_test
 ```
